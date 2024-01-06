@@ -49,7 +49,7 @@ export function PostQuestionnaireSelect({
             </FormControl>
             <SelectContent>
               {options.map((option) => (
-                <SelectItem value={option}>{option}</SelectItem>
+                <SelectItem value={option} key={option}>{option}</SelectItem>
               ))}
             </SelectContent>
           </Select>
