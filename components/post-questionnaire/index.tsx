@@ -23,9 +23,27 @@ export function PostQuestionnaire() {
       referenceLinks: "",
     },
   });
-
   // Submit handler
   function onSubmit(values: zod.infer<typeof formSchema>) {
+    fetch("api/gen-post", {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        // Add any other headers needed for the API
+      },
+    })
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        console.log(data);
+      })
+      .catch((error) => {
+        console.error("There was an error fetching the data:", error);
+      });
     console.log(values);
   }
 
