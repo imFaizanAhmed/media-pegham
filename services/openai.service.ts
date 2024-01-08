@@ -10,7 +10,8 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 // to create Document chain
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
-
+import * as zod from "zod";
+import { postFormSchema } from "@/components/post-questionnaire/validation";
 class PostGenerator {
   static instance: PostGenerator;
 
@@ -18,9 +19,20 @@ class PostGenerator {
   //RunnableSequence<any, BaseMessageChunk>
 
   constructor() {
+    // prompt for the document chain
     const prompt = ChatPromptTemplate.fromMessages([
-      ["system", "You are a world class technical documentation writer."],
-      ["user", "{input}"],
+      [
+        "system",
+        `You are a world class digital content writer.
+        
+        When I ask for help to write something, you will reply with a where each paragraph contains at least one joke or playful comment.`,
+      ],
+      [
+        "user",
+        `Write a social media post for {socialMedia}. Start your response with small but eye catchy summary and then explain the topic in detail.
+
+      topic: {topic}`,
+      ],
     ]);
 
     const chatModel = new ChatOpenAI({
@@ -58,14 +70,20 @@ class PostGenerator {
     );
 
     // prompt for the document chain
-    const prompt =
-      ChatPromptTemplate.fromTemplate(`Answer the following question based only on the provided context:
+    const prompt = ChatPromptTemplate.fromMessages([
+      [
+        "system",
+        `You are a world class digital content writer.
+        
+        When I ask for help to write something, you will reply with a where each paragraph contains at least one joke or playful comment.`,
+      ],
+      [
+        "user",
+        `Write a social media post for {socialMedia}. Start your response with small but eye catchy summary and then explain the topic in detail.
 
-      <context>
-      {context}
-      </context>
-
-      Question: {input}`);
+      topic: {topic}`,
+      ],
+    ]);
 
     // creating document chain
     const documentChain = await createStuffDocumentsChain({
@@ -84,17 +102,24 @@ class PostGenerator {
     const result = await retrievalChain.invoke({
       input: "what is LangSmith?",
     });
-    
+
     // console.log(result.answer);
     return result.answer;
   }
 
-  async generatePost() {
+  async generatePost({
+    referenceLinks,
+    socialMediaPlateform,
+    description,
+    vibe,
+  }: zod.infer<typeof postFormSchema>) {
     const resp = await this.#chain.invoke({
-      input: "what is LangSmith?",
+      socialMedia: socialMediaPlateform,
+      topic: description
     });
 
     console.log("resp", resp);
+    return resp;
   }
 }
 

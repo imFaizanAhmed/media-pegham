@@ -7,13 +7,13 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 
-import { formSchema } from "./validation";
+import { postFormSchema } from "./validation";
 import { UseFormReturn } from "react-hook-form";
 import { Textarea } from "../ui";
 
 interface PostQuestionnaireTextareaType {
-  fieldName: keyof zod.infer<typeof formSchema>;
-  form: UseFormReturn<zod.infer<typeof formSchema>, any, undefined>;
+  fieldName: keyof zod.infer<typeof postFormSchema>;
+  form: UseFormReturn<zod.infer<typeof postFormSchema>, any, undefined>;
   description: string;
   placeholder: string;
 }

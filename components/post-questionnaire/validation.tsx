@@ -1,7 +1,7 @@
 import * as zod from "zod";
 import { PostVibe, SocialMediaPlatform } from "./utils";
 
-export const formSchema = zod.object({
+export const postFormSchema = zod.object({
     description: zod.string().min(10, {
       message: "Post Description must be at least 10 characters.",
     }),

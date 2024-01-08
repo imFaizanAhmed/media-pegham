@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
@@ -8,14 +9,18 @@ import { Form } from "@/components/ui/form";
 
 import { Button } from "@/components/ui/button";
 import { PostQuestionnaireSelect } from "./post-questionnaire.select";
-import { formSchema } from "./validation";
+import { postFormSchema } from "./validation";
 import { PostVibe, SocialMediaPlatform } from "./utils";
 import { PostQuestionnaireTextarea } from "./post-questionnaire.textarea";
+import { LoadingSpinner } from "../ui/loader";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export function PostQuestionnaire() {
+  const [isLoading, setLoading] = useState<boolean>(false);
+  const [generatedPost, setGeneratedPost] = useState<string | null>(null);
   // Defining form fields
-  const form = useForm<zod.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const form = useForm<zod.infer<typeof postFormSchema>>({
+    resolver: zodResolver(postFormSchema),
     defaultValues: {
       description: "",
       socialMediaPlateform: SocialMediaPlatform[0],
@@ -23,28 +28,36 @@ export function PostQuestionnaire() {
       referenceLinks: "",
     },
   });
+
   // Submit handler
-  function onSubmit(values: zod.infer<typeof formSchema>) {
+  function onSubmit(values: zod.infer<typeof postFormSchema>) {
+    setLoading(true);
+    setGeneratedPost(null);
+    // calling API to generate social media posts
     fetch("api/gen-post", {
-      method: "GET",
+      method: "POST",
       headers: {
         "Content-Type": "application/json",
         // Add any other headers needed for the API
       },
+      body: JSON.stringify(values),
     })
       .then((response) => {
+        setLoading(false);
+
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
         return response.json();
       })
       .then((data) => {
+        console.log("data", data);
+        setGeneratedPost(data.message);
         console.log(data);
       })
       .catch((error) => {
         console.error("There was an error fetching the data:", error);
       });
-    console.log(values);
   }
 
   // renderer
@@ -65,7 +78,7 @@ export function PostQuestionnaire() {
           <PostQuestionnaireTextarea
             form={form}
             fieldName="referenceLinks"
-            description="2. Write reference post link. Enter multiple links seperated by comma."
+            description="2. Provide reference post link. Enter multiple links seperated by comma."
             placeholder="e.g. https://medium.com/@imfaizanahmed/circuit-breaker-pattern-to-avoid-service-failures-7c562504a686"
           />
           <PostQuestionnaireSelect
@@ -82,9 +95,21 @@ export function PostQuestionnaire() {
             placeholder="Vibe"
             options={PostVibe}
           />
-          <Button type="submit" className="w-full">
-            Generate your post
+          <Button type="submit" disabled={isLoading} className="w-full">
+            {isLoading ? (
+              <>
+                <LoadingSpinner className="text-primary-foreground mr-2" />{" "}
+                Doing magic
+              </>
+            ) : (
+              <span>Generate your post</span>
+            )}
           </Button>
+
+          {(!!generatedPost || isLoading) && <div className="p-4 border-solid border-2">
+            { !isLoading && <div><span>Generated Post {generatedPost}</span></div>}
+            {isLoading && <><span>Generating Post</span><Skeleton className="w-[100%] h-[200px]" /></>}
+          </div>}
         </form>
       </div>
     </Form>
