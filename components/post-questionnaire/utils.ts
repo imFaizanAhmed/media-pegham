@@ -7,4 +7,6 @@ export const SocialMediaPlatform = [
 
 export const PostVibe = [
     "Professional", "Casual", "Funny", "Informative", "Persuasive"
-]
+];
+
+export type PostVibeType =  "Professional" | "Casual" | "Funny" | "Informative" | "Persuasive";

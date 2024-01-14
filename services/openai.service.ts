@@ -12,35 +12,23 @@ import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import * as zod from "zod";
 import { postFormSchema } from "@/components/post-questionnaire/validation";
+import { getPromptFromVibe } from "./openai-helper";
+import { PostVibeType} from '@/components/post-questionnaire/utils'
 class PostGenerator {
   static instance: PostGenerator;
 
   #chain: any;
   //RunnableSequence<any, BaseMessageChunk>
+  #chatModel: any;
+  #outputParser: any;
 
   constructor() {
     // prompt for the document chain
-    const prompt = ChatPromptTemplate.fromMessages([
-      [
-        "system",
-        `You are a world class digital content writer.
-        
-        When I ask for help to write something, you will reply with a where each paragraph contains at least one joke or playful comment.`,
-      ],
-      [
-        "user",
-        `Write a social media post for {socialMedia}. Start your response with small but eye catchy summary and then explain the topic in detail.
 
-      topic: {topic}`,
-      ],
-    ]);
-
-    const chatModel = new ChatOpenAI({
+    this.#chatModel = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
-    const outputParser = new StringOutputParser();
-
-    this.#chain = prompt.pipe(chatModel).pipe(outputParser);
+    this.#outputParser = new StringOutputParser();
   }
 
   async generatePostFromDocs() {
@@ -113,9 +101,20 @@ class PostGenerator {
     description,
     vibe,
   }: zod.infer<typeof postFormSchema>) {
+
+    const promptTemplate = getPromptFromVibe(vibe as PostVibeType);
+
+    const prompt = ChatPromptTemplate.fromMessages([
+      promptTemplate[0],
+      promptTemplate[1],
+    ]);
+
+    this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
+
     const resp = await this.#chain.invoke({
       socialMedia: socialMediaPlateform,
-      topic: description
+      topic: description,
+      vibe
     });
 
     console.log("resp", resp);

@@ -107,7 +107,7 @@ export function PostQuestionnaire() {
           </Button>
 
           {(!!generatedPost || isLoading) && <div className="p-4 border-solid border-2">
-            { !isLoading && <div><span>Generated Post {generatedPost}</span></div>}
+            { !isLoading && <div className="whitespace-pre-wrap"><span>Generated Post<br /> <br /> {generatedPost}</span></div>}
             {isLoading && <><span>Generating Post</span><Skeleton className="w-[100%] h-[200px]" /></>}
           </div>}
         </form>
