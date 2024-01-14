@@ -28,6 +28,7 @@ class PostGenerator {
     this.#chatModel = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY,
     });
+    console.log("process.env.OPENAI_API_KEY,", process.env.OPENAI_API_KEY);
     this.#outputParser = new StringOutputParser();
   }
 
