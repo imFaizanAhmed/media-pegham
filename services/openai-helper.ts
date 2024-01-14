@@ -12,6 +12,7 @@ import {
 // function to return the prompt for desire vibe
 export function getPromptFromVibe(vibe: PostVibeType): BaseMessagePromptTemplateLike[] {
 
+  console.log("for testing");
   switch (vibe) {
     case "Funny":
       return funnyPrompt;
