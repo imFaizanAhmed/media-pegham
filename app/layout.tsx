@@ -5,10 +5,14 @@ import { ModeToggle } from "@/components/ui/mode-toggle";
 import { RenderLogo } from "@/components/logo";
 import { ThemeProvider } from "@/components/theme-provider";
 const inter = Inter({ subsets: ["latin"] });
+import Icon from '@/public/writingIcon-light.svg'
 
 export const metadata: Metadata = {
   title: "MediaPegham",
   description: "Created with love by Faizan Ahmed",
+  authors: [{name:'Faizan Ahmed'}],
+  keywords:['post generator', "social media", "AI", "Artifical intelligence", "LinkedIn", "Twitter", "Medium" ],
+  icons: Icon
 };
 
 export default function RootLayout({
