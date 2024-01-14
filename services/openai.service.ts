@@ -104,21 +104,21 @@ class PostGenerator {
 
     const promptTemplate = getPromptFromVibe(vibe as PostVibeType);
 
-    // const prompt = ChatPromptTemplate.fromMessages([
-    //   promptTemplate[0],
-    //   promptTemplate[1],
-    // ]);
+    const prompt = ChatPromptTemplate.fromMessages([
+      promptTemplate[0],
+      promptTemplate[1],
+    ]);
 
-    // this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
+    this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
 
-    // const resp = await this.#chain.invoke({
-    //   socialMedia: socialMediaPlateform,
-    //   topic: description,
-    //   vibe
-    // });
+    const resp = await this.#chain.invoke({
+      socialMedia: socialMediaPlateform,
+      topic: description,
+      vibe
+    });
 
-    console.log("resp", promptTemplate);
-    return promptTemplate;
+    console.log("resp", resp);
+    return resp;
   }
 }
 
