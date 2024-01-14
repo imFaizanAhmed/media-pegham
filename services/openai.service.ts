@@ -110,7 +110,11 @@ class PostGenerator {
       promptTemplate[1],
     ]);
 
+    console.log("prompt", prompt);
+
     this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
+
+    console.log("this.#chain", this.#chain);
 
     const resp = await this.#chain.invoke({
       socialMedia: socialMediaPlateform,
