@@ -13,7 +13,8 @@ import { createRetrievalChain } from "langchain/chains/retrieval";
 import * as zod from "zod";
 import { postFormSchema } from "@/components/post-questionnaire/validation";
 import { getPromptFromVibe } from "./openai-helper";
-import { PostVibeType} from '@/components/post-questionnaire/utils'
+import { PostVibeType } from "@/components/post-questionnaire/utils";
+
 class PostGenerator {
   static instance: PostGenerator;
 
@@ -27,6 +28,7 @@ class PostGenerator {
 
     this.#chatModel = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY,
+      maxTokens: 25,
     });
     console.log("process.env.OPENAI_API_KEY,", process.env.OPENAI_API_KEY);
     this.#outputParser = new StringOutputParser();
@@ -102,28 +104,34 @@ class PostGenerator {
     description,
     vibe,
   }: zod.infer<typeof postFormSchema>) {
-
     const promptTemplate = getPromptFromVibe(vibe as PostVibeType);
 
     const prompt = ChatPromptTemplate.fromMessages([
       promptTemplate[0],
       promptTemplate[1],
+      `Social Media Platform: ${socialMediaPlateform}`, // Including context in prompt
+      `Description: ${description}`,
+      `Vibe: ${vibe}`
     ]);
-
-    console.log("prompt", prompt);
 
     this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
 
-    console.log("this.#chain", this.#chain);
+    const stream = await this.#chain.stream();
 
-    const resp = await this.#chain.invoke({
-      socialMedia: socialMediaPlateform,
-      topic: description,
-      vibe
+    // const resp = await this.#chain.invoke({
+    //   socialMedia: socialMediaPlateform,
+    //   topic: description,
+    //   vibe,
+    // });
+
+    const httpResponse = new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
     });
 
-    console.log("resp", resp);
-    return resp;
+    console.log("httpResponse", httpResponse);
+    return httpResponse;
   }
 }
 

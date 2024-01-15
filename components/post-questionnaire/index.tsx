@@ -4,6 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
+import axios from 'axios';
 
 import { Form } from "@/components/ui/form";
 
@@ -30,34 +31,26 @@ export function PostQuestionnaire() {
   });
 
   // Submit handler
-  function onSubmit(values: zod.infer<typeof postFormSchema>) {
+  async function onSubmit(values: zod.infer<typeof postFormSchema>) {
     setLoading(true);
     setGeneratedPost(null);
+    let data = '';
     // calling API to generate social media posts
-    fetch("api/gen-post", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        // Add any other headers needed for the API
-      },
-      body: JSON.stringify(values),
-    })
-      .then((response) => {
-        setLoading(false);
+    const responseStream  = await axios.post("api/gen-post", {
+      ...values,
+    }, {
+      responseType: 'stream'
+    });
+    responseStream.data.on('data', (chunk: any) => {
+      data += chunk;
+      console.log("chunk", chunk);
+  });
 
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then((data) => {
-        console.log("data", data);
-        setGeneratedPost(data.message);
-        console.log(data);
-      })
-      .catch((error) => {
-        console.error("There was an error fetching the data:", error);
-      });
+  responseStream.data.on('end', () => {
+      // setResponse(data);
+      console.log("=======> the end")
+  });
+
   }
 
   // renderer

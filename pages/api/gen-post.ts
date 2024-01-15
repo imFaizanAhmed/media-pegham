@@ -29,9 +29,10 @@ export default async function handler(
       }
 
       // calling generate Post content
-      const post = await postGenerator.generatePost(req.body);
+      const steamResponse = await postGenerator.generatePost(req.body);
 
-      res.status(200).json({ message: post });
+      // res.status(200).json({ message: post });
+      return steamResponse;
 
     } else {
       // not GET request
