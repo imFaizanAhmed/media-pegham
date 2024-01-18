@@ -10,12 +10,14 @@ import {
 import { postFormSchema } from "./validation";
 import { UseFormReturn } from "react-hook-form";
 import { Textarea } from "../ui";
+import { ChangeEventHandler } from "react";
 
 interface PostQuestionnaireTextareaType {
   fieldName: keyof zod.infer<typeof postFormSchema>;
   form: UseFormReturn<zod.infer<typeof postFormSchema>, any, undefined>;
   description: string;
   placeholder: string;
+  handleInputChange?: ChangeEventHandler<HTMLTextAreaElement>
 }
 
 export function PostQuestionnaireTextarea({
@@ -23,6 +25,7 @@ export function PostQuestionnaireTextarea({
   fieldName,
   description,
   placeholder,
+  handleInputChange
 }: PostQuestionnaireTextareaType) {
   return (
     <FormField
@@ -35,7 +38,7 @@ export function PostQuestionnaireTextarea({
             {description}
           </FormDescription>
           <FormControl>
-            <Textarea placeholder={placeholder} {...field} />
+            <Textarea placeholder={placeholder} onChange={handleInputChange} />
           </FormControl>
 
           <FormMessage />

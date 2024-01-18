@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as zod from "zod";
-import axios from 'axios';
 
 import { Form } from "@/components/ui/form";
 
@@ -15,6 +14,8 @@ import { PostVibe, SocialMediaPlatform } from "./utils";
 import { PostQuestionnaireTextarea } from "./post-questionnaire.textarea";
 import { LoadingSpinner } from "../ui/loader";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useChat } from "ai/react";
+import { ChatCompletionRequestMessageRoleEnum } from "openai-edge";
 
 export function PostQuestionnaire() {
   const [isLoading, setLoading] = useState<boolean>(false);
@@ -30,40 +31,47 @@ export function PostQuestionnaire() {
     },
   });
 
-  // Submit handler
-  async function onSubmit(values: zod.infer<typeof postFormSchema>) {
-    setLoading(true);
-    setGeneratedPost(null);
-    let data = '';
-    // calling API to generate social media posts
-    const responseStream  = await axios.post("api/gen-post", {
-      ...values,
-    }, {
-      responseType: 'stream'
-    });
-    responseStream.data.on('data', (chunk: any) => {
-      data += chunk;
-      console.log("chunk", chunk);
+  const { messages, handleInputChange, handleSubmit, error } = useChat({
+    api: "api/gen-post",
+    body: {
+      ...form.getValues(),
+    },
   });
 
-  responseStream.data.on('end', () => {
-      // setResponse(data);
-      console.log("=======> the end")
-  });
-
+  function onsubmit(e: any) {
+    handleSubmit(e);
   }
+
+  useEffect(() => {
+    if (generatedPost?.startsWith("invalid request")) {
+      
+    } else {
+      let data = "";
+      if (!!messages && messages.length > 1) {
+        messages.forEach((message) => {
+          if (
+            message.role === ChatCompletionRequestMessageRoleEnum.Assistant ||
+            message.role === ChatCompletionRequestMessageRoleEnum.System
+          ) {
+            data = message.content;
+          }
+        });
+        setGeneratedPost(data);
+      }
+    }
+  }, [messages]);
+
+  console.log("error", error)
 
   // renderer
   return (
     <Form {...form}>
       <div className="flex justify-center mt-12">
-        <form
-          onSubmit={form.handleSubmit(onSubmit)}
-          className="space-y-8 w-[80%]"
-        >
+        <form onSubmit={onsubmit} className="space-y-8 w-[80%]">
           <PostQuestionnaireTextarea
             form={form}
             fieldName="description"
+            handleInputChange={handleInputChange}
             description="1. Write brief description about the post. You can write the
             topic names, keywords, or any detail."
             placeholder="e.g. Write a article about importants of AI in development."
@@ -99,10 +107,24 @@ export function PostQuestionnaire() {
             )}
           </Button>
 
-          {(!!generatedPost || isLoading) && <div className="p-4 border-solid border-2">
-            { !isLoading && <div className="whitespace-pre-wrap"><span>Generated Post<br /> <br /> {generatedPost}</span></div>}
-            {isLoading && <><span>Generating Post</span><Skeleton className="w-[100%] h-[200px]" /></>}
-          </div>}
+          {!error && (!!generatedPost || isLoading) && (
+            <div className="p-4 border-solid border-2">
+              {!isLoading && (
+                <div className="whitespace-pre-wrap">
+                  <span>{generatedPost}</span>
+                </div>
+              )}
+              {isLoading && (
+                <>
+                  <span>Generating Post</span>
+                  <Skeleton className="w-[100%] h-[200px]" />
+                </>
+              )}
+            </div>
+          )}
+          {!!error && (
+            <div className="text-[#dc2626]">We slipped your response. Please try again in a while.</div>
+          )}
         </form>
       </div>
     </Form>

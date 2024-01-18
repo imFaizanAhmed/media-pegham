@@ -11,9 +11,14 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import * as zod from "zod";
-import { postFormSchema } from "@/components/post-questionnaire/validation";
+import { genPostSchema } from "@/components/post-questionnaire/validation";
 import { getPromptFromVibe } from "./openai-helper";
-import { PostVibeType } from "@/components/post-questionnaire/utils";
+import { OpenAIStream } from "ai";
+
+import {
+  Configuration,
+  OpenAIApi,
+} from "openai-edge";
 
 class PostGenerator {
   static instance: PostGenerator;
@@ -30,7 +35,6 @@ class PostGenerator {
       openAIApiKey: process.env.OPENAI_API_KEY,
       maxTokens: 25,
     });
-    console.log("process.env.OPENAI_API_KEY,", process.env.OPENAI_API_KEY);
     this.#outputParser = new StringOutputParser();
   }
 
@@ -98,40 +102,30 @@ class PostGenerator {
     return result.answer;
   }
 
-  async generatePost({
-    referenceLinks,
-    socialMediaPlateform,
-    description,
-    vibe,
-  }: zod.infer<typeof postFormSchema>) {
-    const promptTemplate = getPromptFromVibe(vibe as PostVibeType);
+  async generatePost(data: zod.infer<typeof genPostSchema>) {
+    const promptTemplate = getPromptFromVibe(data);
 
-    const prompt = ChatPromptTemplate.fromMessages([
-      promptTemplate[0],
-      promptTemplate[1],
-      `Social Media Platform: ${socialMediaPlateform}`, // Including context in prompt
-      `Description: ${description}`,
-      `Vibe: ${vibe}`
-    ]);
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
 
-    this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
-
-    const stream = await this.#chain.stream();
-
-    // const resp = await this.#chain.invoke({
-    //   socialMedia: socialMediaPlateform,
-    //   topic: description,
-    //   vibe,
-    // });
-
-    const httpResponse = new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-      },
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      stream: true,
+      messages: [
+        //   {
+        //     role: ChatCompletionRequestMessageRoleEnum.System,
+        //     content: `You are a world class digital content writer.
+        //     When I ask for help to write something, you will reply with a where each paragraph contains at least one joke or playful comment.`,
+        //   },
+        ...promptTemplate,
+      ],
     });
 
-    console.log("httpResponse", httpResponse);
-    return httpResponse;
+    const stream = OpenAIStream(response);
+    // IterableReadableStream
+    return stream;
   }
 }
 

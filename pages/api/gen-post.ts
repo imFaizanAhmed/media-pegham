@@ -1,51 +1,59 @@
 // import { NextResponse } from "next/server";
-import { postFormSchema } from "@/components/post-questionnaire/validation";
+import { genPostSchema } from "@/components/post-questionnaire/validation";
 import { postGenerator } from "@/services/openai.service";
-import { NextApiRequest, NextApiResponse } from "next";
 import { ZodIssue } from "zod";
+import { StreamingTextResponse } from 'ai'
 
 export type GenPostResponseData = {
   message?: string;
   error?: string | ZodIssue[];
 };
 
+// Using Edge runtime
+export const config = {
+  runtime: 'edge',
+};
+
 export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse<GenPostResponseData>
+  req: Request
 ) {
   try {
     // if GET request
     if (req.method === "POST") {
 
+      const data = await req.json()
+
       // validating payload
-      const response = postFormSchema.safeParse(req.body);
+      const response = genPostSchema.safeParse(data);
 
       // if validation failed, return error messages
       if (!response.success) {
         const { errors } = response.error;
-        return res
-          .status(400)
-          .json({ message: "Invalid request", error: errors });
+        return new Response(`invalid request: ${errors}`, {
+          headers: {
+            "Content-Type": "text/plain; charset=utf-8",
+          },
+        });
       }
 
       // calling generate Post content
-      const steamResponse = await postGenerator.generatePost(req.body);
+      const stream = await postGenerator.generatePost(data);
 
-      // res.status(200).json({ message: post });
-      return steamResponse;
+      return new StreamingTextResponse(stream);
 
     } else {
-      // not GET request
-      res.status(404).send({ error: "Not Found" });
+      return new Response("API Not Found", {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+        },
+      });
     }
   } catch (err) {
     // if any error occours
-    res.status(500).send({ error: "failed to fetch data" });
+    return new Response(`stream error: ${err}`, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+      },
+    });
   }
-  // return new NextResponse(JSON.stringify({ success: true, message: "" }), {
-  //   status: 200,
-  //   headers: {
-  //     "Content-Type": "application/json",
-  //   },
-  // });
 }
