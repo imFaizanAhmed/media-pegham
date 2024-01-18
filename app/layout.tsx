@@ -36,7 +36,7 @@ export default function RootLayout({
                 MediaPegham
               </div>
               <div className="flex items-center mt-2 sm:mt-0">
-                <div className="pr-8 text-base"> Login</div>
+                {/* <div className="pr-8 text-base"> Login</div> */}
                 <ModeToggle />
               </div>
             </div>
