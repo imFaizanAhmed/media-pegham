@@ -12,14 +12,12 @@ import { PostQuestionnaireSelect } from "./post-questionnaire.select";
 import { postFormSchema } from "./validation";
 import { PostVibe, SocialMediaPlatform } from "./utils";
 import { PostQuestionnaireTextarea } from "./post-questionnaire.textarea";
-import { LoadingSpinner } from "../ui/loader";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useChat } from "ai/react";
 import { ChatCompletionRequestMessageRoleEnum } from "openai-edge";
 
 export function PostQuestionnaire() {
-  const [isLoading, setLoading] = useState<boolean>(false);
   const [generatedPost, setGeneratedPost] = useState<string | null>(null);
+  const [userPrompt, setUserPrompt] = useState<string>("");
   // Defining form fields
   const form = useForm<zod.infer<typeof postFormSchema>>({
     resolver: zodResolver(postFormSchema),
@@ -31,14 +29,17 @@ export function PostQuestionnaire() {
     },
   });
 
-  const { messages, handleInputChange, handleSubmit, error } = useChat({
+  // Getting functionality from ai/react
+  const { messages, handleInputChange, input, handleSubmit, error } = useChat({
     api: "api/gen-post",
     body: {
       ...form.getValues(),
     },
   });
-
+  
   function onsubmit(e: any) {
+    if (!!input)
+    setUserPrompt(input);
     handleSubmit(e);
   }
 
@@ -61,8 +62,6 @@ export function PostQuestionnaire() {
     }
   }, [messages]);
 
-  console.log("error", error)
-
   // renderer
   return (
     <Form {...form}>
@@ -71,6 +70,7 @@ export function PostQuestionnaire() {
           <PostQuestionnaireTextarea
             form={form}
             fieldName="description"
+            input={input}
             handleInputChange={handleInputChange}
             description="1. Write brief description about the post. You can write the
             topic names, keywords, or any detail."
@@ -96,30 +96,18 @@ export function PostQuestionnaire() {
             placeholder="Vibe"
             options={PostVibe}
           />
-          <Button type="submit" disabled={isLoading} className="w-full">
-            {isLoading ? (
-              <>
-                <LoadingSpinner className="text-primary-foreground mr-2" />{" "}
-                Doing magic
-              </>
-            ) : (
+          <Button type="submit" className="w-full">
               <span>Generate your post</span>
-            )}
           </Button>
 
-          {!error && (!!generatedPost || isLoading) && (
+          {!error && !!generatedPost && (
             <div className="p-4 border-solid border-2">
-              {!isLoading && (
                 <div className="whitespace-pre-wrap">
+                  <span className="font-bold capitalize">{userPrompt}</span>
+                  <br />
+                  <br />
                   <span>{generatedPost}</span>
                 </div>
-              )}
-              {isLoading && (
-                <>
-                  <span>Generating Post</span>
-                  <Skeleton className="w-[100%] h-[200px]" />
-                </>
-              )}
             </div>
           )}
           {!!error && (

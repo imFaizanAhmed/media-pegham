@@ -17,6 +17,7 @@ interface PostQuestionnaireTextareaType {
   form: UseFormReturn<zod.infer<typeof postFormSchema>, any, undefined>;
   description: string;
   placeholder: string;
+  input?: string;
   handleInputChange?: ChangeEventHandler<HTMLTextAreaElement>
 }
 
@@ -25,6 +26,7 @@ export function PostQuestionnaireTextarea({
   fieldName,
   description,
   placeholder,
+  input,
   handleInputChange
 }: PostQuestionnaireTextareaType) {
   return (
@@ -38,7 +40,7 @@ export function PostQuestionnaireTextarea({
             {description}
           </FormDescription>
           <FormControl>
-            <Textarea placeholder={placeholder} onChange={handleInputChange} />
+            <Textarea placeholder={placeholder} onChange={handleInputChange} value={input}/>
           </FormControl>
 
           <FormMessage />
