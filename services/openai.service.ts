@@ -114,11 +114,6 @@ class PostGenerator {
       model: "gpt-3.5-turbo",
       stream: true,
       messages: [
-        //   {
-        //     role: ChatCompletionRequestMessageRoleEnum.System,
-        //     content: `You are a world class digital content writer.
-        //     When I ask for help to write something, you will reply with a where each paragraph contains at least one joke or playful comment.`,
-        //   },
         ...promptTemplate,
       ],
     });

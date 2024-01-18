@@ -15,13 +15,13 @@ export function getPromptFromVibe(data: zod.infer<typeof genPostSchema>) :any {
     case "Funny":
       return funnyPrompt(data);
     case 'Casual':
-        return casualPrompt;
+        return casualPrompt(data);
     case 'Informative':
-        return informativePrompt;
+        return informativePrompt(data);
     case 'Professional':
-        return professionalPrompt
+        return professionalPrompt(data)
     case 'Persuasive':
-        return persuasivePrompt;
+        return persuasivePrompt(data);
 
   }
 }
