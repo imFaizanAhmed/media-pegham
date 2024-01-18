@@ -1,6 +1,4 @@
-import { BaseMessagePromptTemplateLike } from "@langchain/core/prompts";
-
-import { PostVibeType } from "@/components/post-questionnaire/utils";
+import { genPostSchema } from "@/components/post-questionnaire/validation";
 import {
   funnyPrompt,
   casualPrompt,
@@ -8,22 +6,22 @@ import {
   persuasivePrompt,
   professionalPrompt,
 } from "@/lib/prompts";
+import * as zod from 'zod';
 
 // function to return the prompt for desire vibe
-export function getPromptFromVibe(vibe: PostVibeType): BaseMessagePromptTemplateLike[] {
+export function getPromptFromVibe(data: zod.infer<typeof genPostSchema>) :any {
 
-  console.log("for testing");
-  switch (vibe) {
+  switch (data.vibe) {
     case "Funny":
-      return funnyPrompt;
+      return funnyPrompt(data);
     case 'Casual':
-        return casualPrompt;
+        return casualPrompt(data);
     case 'Informative':
-        return informativePrompt;
+        return informativePrompt(data);
     case 'Professional':
-        return professionalPrompt
+        return professionalPrompt(data)
     case 'Persuasive':
-        return persuasivePrompt;
+        return persuasivePrompt(data);
 
   }
 }

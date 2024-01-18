@@ -11,9 +11,15 @@ import { MemoryVectorStore } from "langchain/vectorstores/memory";
 import { createStuffDocumentsChain } from "langchain/chains/combine_documents";
 import { createRetrievalChain } from "langchain/chains/retrieval";
 import * as zod from "zod";
-import { postFormSchema } from "@/components/post-questionnaire/validation";
+import { genPostSchema } from "@/components/post-questionnaire/validation";
 import { getPromptFromVibe } from "./openai-helper";
-import { PostVibeType} from '@/components/post-questionnaire/utils'
+import { OpenAIStream } from "ai";
+
+import {
+  Configuration,
+  OpenAIApi,
+} from "openai-edge";
+
 class PostGenerator {
   static instance: PostGenerator;
 
@@ -27,8 +33,8 @@ class PostGenerator {
 
     this.#chatModel = new ChatOpenAI({
       openAIApiKey: process.env.OPENAI_API_KEY,
+      maxTokens: 25,
     });
-    console.log("process.env.OPENAI_API_KEY,", process.env.OPENAI_API_KEY);
     this.#outputParser = new StringOutputParser();
   }
 
@@ -96,34 +102,25 @@ class PostGenerator {
     return result.answer;
   }
 
-  async generatePost({
-    referenceLinks,
-    socialMediaPlateform,
-    description,
-    vibe,
-  }: zod.infer<typeof postFormSchema>) {
+  async generatePost(data: zod.infer<typeof genPostSchema>) {
+    const promptTemplate = getPromptFromVibe(data);
 
-    const promptTemplate = getPromptFromVibe(vibe as PostVibeType);
+    const configuration = new Configuration({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
+    const openai = new OpenAIApi(configuration);
 
-    const prompt = ChatPromptTemplate.fromMessages([
-      promptTemplate[0],
-      promptTemplate[1],
-    ]);
-
-    console.log("prompt", prompt);
-
-    this.#chain = prompt.pipe(this.#chatModel).pipe(this.#outputParser);
-
-    console.log("this.#chain", this.#chain);
-
-    const resp = await this.#chain.invoke({
-      socialMedia: socialMediaPlateform,
-      topic: description,
-      vibe
+    const response = await openai.createChatCompletion({
+      model: "gpt-3.5-turbo",
+      stream: true,
+      messages: [
+        ...promptTemplate,
+      ],
     });
 
-    console.log("resp", resp);
-    return resp;
+    const stream = OpenAIStream(response);
+    // IterableReadableStream
+    return stream;
   }
 }
 
