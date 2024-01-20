@@ -14,6 +14,7 @@ import { PostVibe, SocialMediaPlatform } from "./utils";
 import { PostQuestionnaireTextarea } from "./post-questionnaire.textarea";
 import { useChat } from "ai/react";
 import { ChatCompletionRequestMessageRoleEnum } from "openai-edge";
+import axios from "axios";
 
 export function PostQuestionnaire() {
   const [generatedPost, setGeneratedPost] = useState<string | null>(null);
@@ -28,6 +29,10 @@ export function PostQuestionnaire() {
       referenceLinks: "",
     },
   });
+
+  useEffect(() => {
+    axios.get('api/use-doc')
+  }, []);
 
   // Getting functionality from ai/react
   const { messages, handleInputChange, input, handleSubmit, error } = useChat({

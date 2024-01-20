@@ -1,10 +1,8 @@
-import { ChatOpenAI } from "@langchain/openai";
+import { ChatOpenAI, OpenAIEmbeddings } from "@langchain/openai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 import { StringOutputParser } from "@langchain/core/output_parsers";
 import { CheerioWebBaseLoader } from "langchain/document_loaders/web/cheerio";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
-// embedding model
-import { OpenAIEmbeddings } from "@langchain/openai";
 // to ingest documents
 import { MemoryVectorStore } from "langchain/vectorstores/memory";
 // to create Document chain
@@ -14,8 +12,10 @@ import * as zod from "zod";
 import { genPostSchema } from "@/components/post-questionnaire/validation";
 import { getPromptFromVibe } from "./openai-helper";
 import { OpenAIStream } from "ai";
+import { WebBrowser } from "langchain/tools/webbrowser";
 
 import {
+  ChatCompletionRequestMessageRoleEnum,
   Configuration,
   OpenAIApi,
 } from "openai-edge";
@@ -36,6 +36,18 @@ class PostGenerator {
       maxTokens: 25,
     });
     this.#outputParser = new StringOutputParser();
+  }
+
+  async fetchWebContent(url: string) {
+    try {
+      const response = await fetch(url);
+      const text = await response.text();
+      // Process the text as needed, e.g., extract relevant information
+      return text;
+    } catch (error) {
+      console.error("Error fetching web content:", error);
+      return "";
+    }
   }
 
   async generatePostFromDocs() {
@@ -102,14 +114,44 @@ class PostGenerator {
     return result.answer;
   }
 
+  async browsingTool() {
+    const model = new ChatOpenAI({ temperature: 0 });
+    const embeddings = new OpenAIEmbeddings(
+      process.env.AZURE_OPENAI_API_KEY
+        ? { azureOpenAIApiDeploymentName: "Embeddings2" }
+        : {}
+    );
+
+    const browser = new WebBrowser({ model, embeddings });
+
+    const result = await browser.call(
+      `"https://www.themarginalian.org/2015/04/09/find-your-bliss-joseph-campbell-power-of-myth","who is joseph campbell"`
+    );
+
+    console.log(result);
+  }
+
   async generatePost(data: zod.infer<typeof genPostSchema>) {
     const promptTemplate = getPromptFromVibe(data);
 
     const configuration = new Configuration({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    const openai = new OpenAIApi(configuration);
 
+    const embeddings = new OpenAIEmbeddings(
+      process.env.AZURE_OPENAI_API_KEY
+        ? { azureOpenAIApiDeploymentName: "Embeddings2" }
+        : {}
+    );
+
+    const model = new ChatOpenAI({ temperature: 0 });
+    const browser = new WebBrowser({ model, embeddings });
+
+    const result = await browser.call(
+      `"https://satria.ai/blog/integrating-openai-api-in-nextjs-14"`
+    );
+
+    const openai = new OpenAIApi(configuration);
     const response = await openai.createChatCompletion({
       model: "gpt-3.5-turbo",
       stream: true,
@@ -119,7 +161,6 @@ class PostGenerator {
     });
 
     const stream = OpenAIStream(response);
-    // IterableReadableStream
     return stream;
   }
 }
