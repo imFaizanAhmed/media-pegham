@@ -76,12 +76,12 @@ export function PostQuestionnaire() {
             topic names, keywords, or any detail."
             placeholder="e.g. Write a article about importants of AI in development."
           />
-          <PostQuestionnaireTextarea
+          {/* <PostQuestionnaireTextarea
             form={form}
             fieldName="referenceLinks"
             description="2. Provide reference post link. Enter multiple links seperated by comma."
             placeholder="e.g. https://medium.com/@imfaizanahmed/circuit-breaker-pattern-to-avoid-service-failures-7c562504a686"
-          />
+          /> */}
           <PostQuestionnaireSelect
             form={form}
             fieldName="socialMediaPlateform"
